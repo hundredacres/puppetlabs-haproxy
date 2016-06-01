@@ -1,7 +1,7 @@
 require 'spec_helper_acceptance'
 
 # C9708 C9709 WONTFIX
-describe "configuring haproxy", :unless => UNSUPPORTED_PLATFORMS.include?(fact('osfamily')) do
+describe "configuring haproxy" do
   # C9961
   describe 'not managing the service' do
     it 'should not listen on any ports' do
@@ -37,6 +37,33 @@ describe "configuring haproxy", :unless => UNSUPPORTED_PLATFORMS.include?(fact('
     describe "multiple ports" do
       it 'should be able to listen on an array of ports' do
         pp = <<-EOS
+        class { 'haproxy': }
+        haproxy::listen { 'stats':
+          ipaddress => '127.0.0.1',
+          ports     => ['9090','9091'],
+          mode      => 'http',
+          options   => { 'stats' => ['uri /','auth puppet:puppet'], },
+        }
+        EOS
+        apply_manifest(pp, :catch_failures => true)
+      end
+
+      it 'should have stats listening on each port' do
+        ['9090','9091'].each do |port|
+          shell("/usr/bin/curl -u puppet:puppet localhost:#{port}") do |r|
+            r.stdout.should =~ /HAProxy/
+            r.exit_code.should == 0
+          end
+        end
+      end
+    end
+
+    describe "with sort_options_alphabetic false" do
+      it 'should start' do
+        pp = <<-EOS
+        class { 'haproxy::globals':
+          sort_options_alphabetic => false,
+        }
         class { 'haproxy': }
         haproxy::listen { 'stats':
           ipaddress => '127.0.0.1',
