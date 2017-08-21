@@ -63,6 +63,11 @@
 #    The parent directory will be created automatically.
 #  Defaults to undef.
 #
+# [*config_validate_cmd*]
+#   Command used by concat validate_cmd to validate new
+#   config file concat is a valid haproxy config.
+#   Default /usr/sbin/haproxy -f % -c
+#
 # === Examples
 #
 # A single instance of haproxy with all defaults
@@ -135,18 +140,20 @@
 #  call haproxy::instance_service.
 #
 define haproxy::instance (
-  $package_ensure   = 'present',
-  $package_name     = undef,
-  $service_ensure   = 'running',
-  $service_manage   = true,
-  $global_options   = undef,
-  $defaults_options = undef,
-  $restart_command  = undef,
-  $custom_fragment  = undef,
-  $config_dir       = undef,
-  $config_file      = undef,
-  $merge_options    = $haproxy::params::merge_options,
-  $service_options  = $haproxy::params::service_options,
+  $package_ensure    = 'present',
+  $package_name      = undef,
+  $service_ensure    = 'running',
+  $service_manage    = true,
+  $global_options    = undef,
+  $defaults_options  = undef,
+  $restart_command   = undef,
+  $custom_fragment   = undef,
+  $config_dir        = undef,
+  $config_file       = undef,
+  $merge_options     = $haproxy::params::merge_options,
+  $service_options   = $haproxy::params::service_options,
+  $sysconfig_options = $haproxy::params::sysconfig_options,
+  $config_validate_cmd = $haproxy::params::config_validate_cmd,
 ) {
 
   if $service_ensure != true and $service_ensure != false {
@@ -178,44 +185,42 @@ define haproxy::instance (
   #   If config_dir defined, use it.  Otherwise:
   #   single-instance hosts: use defaults
   #   multi-instance hosts:  use templates
-  if $config_file != undef {
-    $_config_file = $config_file
+  if $instance_name == 'haproxy' {
+    $_config_file = pick($config_file, $haproxy::params::config_file)
   } else {
-    if $instance_name == 'haproxy' {
-      $_config_file = $haproxy::params::config_file
-    } else {
-      $_config_file = inline_template($haproxy::params::config_file_tmpl)
-    }
+    $_config_file = pick($config_file, inline_template($haproxy::params::config_file_tmpl))
   }
-  if $config_dir != undef {
-    $_config_dir = $config_dir
+
+  validate_absolute_path(dirname($_config_file))
+
+  if $instance_name == 'haproxy' {
+    $_config_dir = pick($config_dir, $haproxy::params::config_dir)
   } else {
-    if $instance_name == 'haproxy' {
-      $_config_dir = $haproxy::params::config_dir
-    } else {
-      $_config_dir = inline_template($haproxy::params::config_dir_tmpl)
-    }
+    $_config_dir = pick($config_dir, inline_template($haproxy::params::config_dir_tmpl))
   }
 
   haproxy::config { $title:
-    instance_name    => $instance_name,
-    config_dir       => $_config_dir,
-    config_file      => $_config_file,
-    global_options   => $_global_options,
-    defaults_options => $_defaults_options,
-    custom_fragment  => $custom_fragment,
-    merge_options    => $merge_options,
+    instance_name       => $instance_name,
+    config_dir          => $_config_dir,
+    config_file         => $_config_file,
+    global_options      => $_global_options,
+    defaults_options    => $_defaults_options,
+    custom_fragment     => $custom_fragment,
+    merge_options       => $merge_options,
+    package_ensure      => $package_ensure,
+    config_validate_cmd => $config_validate_cmd,
   }
   haproxy::install { $title:
     package_name   => $package_name,
     package_ensure => $package_ensure,
   }
   haproxy::service { $title:
-    instance_name   => $instance_name,
-    service_ensure  => $service_ensure,
-    service_manage  => $service_manage,
-    restart_command => $restart_command,
-    service_options => $service_options,
+    instance_name     => $instance_name,
+    service_ensure    => $service_ensure,
+    service_manage    => $service_manage,
+    restart_command   => $restart_command,
+    service_options   => $service_options,
+    sysconfig_options => $sysconfig_options,
   }
 
   if $package_ensure == 'absent' or $package_ensure == 'purged' {

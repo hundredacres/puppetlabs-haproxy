@@ -71,7 +71,7 @@ describe 'haproxy::instance' do
             subject.should contain_concat('/etc/haproxy/haproxy.cfg').with(
               'owner' => '0',
               'group' => '0',
-              'mode'  => '0644'
+              'mode'  => '0640'
             )
           end
           it 'should manage the chroot directory' do
@@ -142,7 +142,7 @@ describe 'haproxy::instance' do
             subject.should contain_concat('/etc/haproxy/haproxy.cfg').with(
               'owner' => '0',
               'group' => '0',
-              'mode'  => '0644'
+              'mode'  => '0640'
             )
           end
           it 'should manage the chroot directory' do
@@ -238,7 +238,9 @@ describe 'haproxy::instance' do
             )
           end
           it 'should not install the haproxy package' do
-            subject.should_not contain_package('haproxy')
+            subject.should_not contain_package('haproxy').with(
+                                 'title' => 'haproxy'
+                               )
           end
           it 'should not install the haproxy service' do
             subject.should_not contain_service('haproxy')
@@ -271,7 +273,7 @@ describe 'haproxy::instance' do
             subject.should contain_concat('/etc/haproxy-group1/haproxy-group1.cfg').with(
               'owner' => '0',
               'group' => '0',
-              'mode'  => '0644'
+              'mode'  => '0640'
             )
           end
           it 'should manage the chroot directory' do
@@ -342,7 +344,7 @@ describe 'haproxy::instance' do
             subject.should contain_concat('/etc/haproxy-group1/haproxy-group1.cfg').with(
               'owner' => '0',
               'group' => '0',
-              'mode'  => '0644'
+              'mode'  => '0640'
             )
           end
           it 'should manage the chroot directory' do
@@ -417,7 +419,7 @@ describe 'haproxy::instance' do
           subject.should contain_concat('/usr/local/etc/haproxy.conf').with(
             'owner' => '0',
             'group' => '0',
-            'mode'  => '0644'
+            'mode'  => '0640'
           )
         end
         it 'should manage the chroot directory' do
@@ -480,7 +482,7 @@ describe 'haproxy::instance' do
           subject.should contain_concat('/usr/local/etc/haproxy.conf').with(
             'owner' => '0',
             'group' => '0',
-            'mode'  => '0644'
+            'mode'  => '0640'
           )
         end
         it 'should manage the chroot directory' do
@@ -565,6 +567,10 @@ describe 'haproxy::instance' do
       context 'only on RedHat family operatingsystems' do
         let(:facts) do
           { :osfamily => 'RedHat' }.merge default_facts
+        end
+        it 'should manage haproxy sysconfig options' do
+          subject.should contain_file('/etc/sysconfig/haproxy-group1')
+          verify_contents(catalogue, '/etc/sysconfig/haproxy-group1', ['OPTIONS=""'])
         end
       end
     end

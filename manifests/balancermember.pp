@@ -47,6 +47,24 @@
 #   If true, then add "cookie SERVERID" stickiness options.
 #    Default false.
 #
+# [*defaults*]
+#   Name of the defaults section the backend or listener use.
+#   Defaults to undef.
+#
+# [*config_file*]
+#   Optional. Path of the config file where this entry will be added.
+#   Assumes that the parent directory exists.
+#   Default: $haproxy::params::config_file
+#
+# [*verifyhost*]
+#   Optional. Will add the verifyhost option to the server line, using the
+#   specific host from server_names as an argument.
+#   Default: false
+#
+# [*weight*]
+#   Optional. Will add the weight option to the server line
+#   Default: undef
+#
 # === Examples
 #
 #  Exporting the resource for a balancer member:
@@ -86,21 +104,33 @@ define haproxy::balancermember (
   $options      = '',
   $define_cookies = false,
   $instance     = 'haproxy',
+  $defaults     = undef,
+  $config_file  = undef,
+  $verifyhost   = false,
+  $weight       = undef,
 ) {
 
   include haproxy::params
+
   if $instance == 'haproxy' {
     $instance_name = 'haproxy'
-    $config_file = $haproxy::params::config_file
+    $_config_file = pick($config_file, $haproxy::config_file)
   } else {
     $instance_name = "haproxy-${instance}"
-    $config_file = inline_template($haproxy::params::config_file_tmpl)
+    $_config_file = pick($config_file, inline_template($haproxy::params::config_file_tmpl))
   }
 
+  validate_absolute_path(dirname($_config_file))
+
+  if $defaults == undef {
+    $order = "20-${listening_service}-01-${name}"
+  } else {
+    $order = "25-${defaults}-${listening_service}-02-${name}"
+  }
   # Template uses $ipaddresses, $server_name, $ports, $option
   concat::fragment { "${instance_name}-${listening_service}_balancermember_${name}":
-    order   => "20-${listening_service}-01-${name}",
-    target  => $config_file,
+    order   => $order,
+    target  => $_config_file,
     content => template('haproxy/haproxy_balancermember.erb'),
   }
 }

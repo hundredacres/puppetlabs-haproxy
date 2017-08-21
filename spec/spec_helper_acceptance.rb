@@ -33,7 +33,7 @@ RSpec.configure do |c|
         if $::osfamily == 'RedHat' {
           class { 'epel': before => Package['socat'], }
           service { 'iptables': ensure => stopped, }
-          exec { 'setenforce Permissive':
+          exec { 'setenforce 0':
             path   => ['/bin','/usr/bin','/sbin','/usr/sbin'],
             onlyif => 'which getenforce && getenforce | grep Enforcing',
           }
@@ -52,6 +52,15 @@ RSpec.configure do |c|
         sleep 1
         shell(%{netstat -tnl|grep ':#{port}'})
         end
+    end
+  end
+
+  # FM-5470, this was added to reset failed count and work around puppet 3.x
+  if ( (fact('operatingsystem') == 'SLES' and fact('operatingsystemmajrelease') == '12') or (fact('osfamily') == 'RedHat' and fact('operatingsystemmajrelease') == '7') )
+    c.after :each do
+      # not all tests have a haproxy service, so the systemctl call can fail,
+      # but we don't care as we only need to reset when it does.
+      shell('systemctl reset-failed haproxy.service || true')
     end
   end
 end
