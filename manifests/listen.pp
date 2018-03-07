@@ -89,24 +89,24 @@
 # Gary Larizza <gary@puppetlabs.com>
 #
 define haproxy::listen (
-  $ports                        = undef,
-  $ipaddress                    = undef,
-  $bind                         = undef,
-  $mode                         = undef,
-  $collect_exported             = true,
-  $options                      = {
-    'option'  => [
+  $ports                                       = undef,
+  $ipaddress                                   = undef,
+  Optional[Hash] $bind                         = undef,
+  $mode                                        = undef,
+  $collect_exported                            = true,
+  $options                                     = {
+    'option'                                  => [
       'tcplog',
     ],
-    'balance' => 'roundrobin'
+    'balance'                                 => 'roundrobin'
   },
-  $instance                     = 'haproxy',
-  $section_name                 = $name,
-  $sort_options_alphabetic      = undef,
-  $defaults                     = undef,
-  $config_file                  = undef,
+  $instance                                    = 'haproxy',
+  $section_name                                = $name,
+  $sort_options_alphabetic                     = undef,
+  $defaults                                    = undef,
+  Optional[Stdlib::Absolutepath] $config_file  = undef,
   # Deprecated
-  $bind_options                 = '',
+  $bind_options                                = '',
 ) {
   if $ports and $bind {
     fail('The use of $ports and $bind is mutually exclusive, please choose either one')
@@ -114,21 +114,18 @@ define haproxy::listen (
   if $ipaddress and $bind {
     fail('The use of $ipaddress and $bind is mutually exclusive, please choose either one')
   }
-  if $ipaddress == undef and $bind == undef {
+  if $ipaddress                               == undef and $bind == undef {
     fail('Either $ipaddress or $bind is needed, please choose one')
   }
-  if $bind_options != '' {
+  if $bind_options                            != '' {
     warning('The $bind_options parameter is deprecated; please use $bind instead')
-  }
-  if $bind {
-    validate_hash($bind)
   }
 
   if defined(Haproxy::Backend[$section_name]) {
     fail("An haproxy::backend resource was discovered with the same name (${section_name}) which is not supported")
   }
 
-  include haproxy::params
+  include ::haproxy::params
 
   if $instance == 'haproxy' {
     $instance_name = 'haproxy'
@@ -137,8 +134,6 @@ define haproxy::listen (
     $instance_name = "haproxy-${instance}"
     $_config_file = pick($config_file, inline_template($haproxy::params::config_file_tmpl))
   }
-
-  validate_absolute_path(dirname($_config_file))
 
   include haproxy::globals
   $_sort_options_alphabetic = pick($sort_options_alphabetic, $haproxy::globals::sort_options_alphabetic)

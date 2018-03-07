@@ -1,30 +1,38 @@
-# == Define Resource Type: haproxy::backend
+# == Define Resource Type: haproxy::resolver
 #
-# This type will setup a backend service configuration block inside the
-#  haproxy.cfg file on an haproxy load balancer.  Each backend service needs one
-#  or more backend member servers (that can be declared with the
-#  haproxy::balancermember defined resource type).  Using storeconfigs, you can
-#  export the haproxy::balancermember resources on all load balancer member
-#  servers and then collect them on a single haproxy load balancer server.
+# This type will setup resolvers configuration block inside
+#  the haproxy.cfg file on an haproxy load balancer.
 #
 # === Requirement/Dependencies:
 #
 # Currently requires the puppetlabs/concat module on the Puppet Forge and
 #  uses storeconfigs on the Puppet Master to export/collect resources
-#  from all backend members.
+#  from all balancer members.
 #
 # === Parameters
 #
 # [*section_name*]
-#    This name goes right after the 'backend' statement in haproxy.cfg
+#    This name goes right after the 'resolvers' statement in haproxy.cfg
 #    Default: $name (the namevar of the resource).
 #
-# [*mode*]
-#   The mode of operation for the backend service. Valid values are undef,
-#    'tcp', 'http', and 'health'.
+# [*nameservers*]
+#   Set of id, ip addresses and port options.
+#   $nameservers = { 'dns1' => '10.0.0.1:53', 'dns2' => '10.0.0.2:53' }
 #
-# [*options*]
-#   A hash of options that are inserted into the backend configuration block.
+# [*hold*]
+#   Defines <period> during which the last name resolution should be kept
+#     based on last valid resolution status.
+#   $hold = { 'nx' => '30s', 'valid' => '10s' }
+#
+# [*resolve_retries*]
+#   Defines the number <nb> of queries to send to resolve a server name before
+#    giving up.
+#   $resolve_retries = 3
+#
+# [*timeout*]
+#   Defines timeouts related to name resolution in the listening serivce's
+#    configuration block.
+#   $timeout = { 'retry' => '1s' }
 #
 # [*collect_exported*]
 #   Boolean, default 'true'. True means 'collect exported @@balancermember
@@ -49,67 +57,67 @@
 #
 # === Examples
 #
-#  Exporting the resource for a backend member:
+#  Exporting the resource for a balancer member:
 #
-#  haproxy::backend { 'puppet00':
-#    options   => {
-#      'option'  => [
-#        'tcplog',
-#        'ssl-hello-chk'
-#      ],
-#      'balance' => 'roundrobin'
+#  haproxy::resolver { 'puppet00':
+#    nameservers     => {
+#      'dns1' => '10.0.0.1:53',
+#      'dns2' => '10.0.0.2:53'
+#    },
+#    hold            => {
+#      'nx'    => '30s',
+#      'valid' => '10s'
+#    },
+#    resolve_retries => 3,
+#    timeout         => {
+#      'retry' => '1s'
 #    },
 #  }
 #
 # === Authors
 #
 # Gary Larizza <gary@puppetlabs.com>
-# Jeremy Kitchen <jeremy@nationbuilder.com>
+# Ricardo Rosales <missingcharacter@gmail.com>
 #
-define haproxy::backend (
-  $mode                    = undef,
-  $collect_exported        = true,
-  $options                 = {
-    'option'  => [
-      'tcplog',
-    ],
-    'balance' => 'roundrobin',
-  },
+define haproxy::resolver (
+  $nameservers             = undef,
+  $hold                    = undef,
+  $resolve_retries         = undef,
+  $timeout                 = undef,
   $instance                = 'haproxy',
   $section_name            = $name,
   $sort_options_alphabetic = undef,
+  $collect_exported        = true,
+  $config_file             = undef,
   $defaults                = undef,
-  Optional[Stdlib::Absolutepath] $config_file             = undef,
 ) {
-
-  if defined(Haproxy::Listen[$section_name]) {
-    fail("An haproxy::listen resource was discovered with the same name (${section_name}) which is not supported")
-  }
 
   include haproxy::params
 
   if $instance == 'haproxy' {
     $instance_name = 'haproxy'
-    $_config_file = pick($config_file, $haproxy::config_file)
+    $_config_file  = pick($config_file, $haproxy::config_file)
   } else {
     $instance_name = "haproxy-${instance}"
-    $_config_file = pick($config_file, inline_template($haproxy::params::config_file_tmpl))
+    $_config_file  = pick($config_file, inline_template($haproxy::params::config_file_tmpl))
   }
 
-  include haproxy::globals
+  validate_absolute_path(dirname($_config_file))
+
+  include ::haproxy::globals
   $_sort_options_alphabetic = pick($sort_options_alphabetic, $haproxy::globals::sort_options_alphabetic)
 
   if $defaults == undef {
-    $order = "20-${section_name}-00"
+    $order = "20-${section_name}-01"
   } else {
-    $order = "25-${defaults}-${section_name}-01"
+    $order = "25-${defaults}-${section_name}-02"
   }
 
-  # Template uses: $section_name, $ipaddress, $ports, $options
-  concat::fragment { "${instance_name}-${section_name}_backend_block":
+  # Template uses: $section_name
+  concat::fragment { "${instance_name}-${section_name}_resolver_block":
     order   => $order,
     target  => $_config_file,
-    content => template('haproxy/haproxy_backend_block.erb'),
+    content => template('haproxy/haproxy_resolver_block.erb'),
   }
 
   if $collect_exported {
