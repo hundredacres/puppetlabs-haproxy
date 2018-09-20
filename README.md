@@ -641,7 +641,7 @@ Configures a service inside a listening or backend service configuration block i
 
 * `verifyhost`: *Optional.* Will add the verifyhost option to the server line, using the specific host from server_names as an argument.  Defaults to false
 
-* `weight`: *Optional.* Will add the weight option to the server line. Defaults to undef
+* `weights`: *Optional.* Will add weight options to server lines. Defaults to undef
 
 #### Define: `haproxy::backend`
 
