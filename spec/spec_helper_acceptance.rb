@@ -1,7 +1,10 @@
+require 'beaker-pe'
+require 'beaker-puppet'
 require 'beaker-rspec'
 require 'beaker/puppet_install_helper'
 
 run_puppet_install_helper
+configure_type_defaults_on(hosts)
 
 RSpec.configure do |c|
   # Project root
@@ -37,15 +40,15 @@ RSpec.configure do |c|
             path   => ['/bin','/usr/bin','/sbin','/usr/sbin'],
             onlyif => 'which getenforce && getenforce | grep Enforcing',
           }
-          if $::operatingsystemmajrelease == '7' {
-            # For `netstat` for serverspec
-            package { 'net-tools': ensure => present, }
-          }
+        }
+        if ($::osfamily == 'RedHat' and $::operatingsystemmajrelease == '7') or ($::osfamily == 'Debian' and ($::operatingsystemmajrelease == '9' or $::operatingsystemmajrelease == '18.04')) {
+          # For `netstat` for serverspec
+          package { 'net-tools': ensure => present, }
         }
       PUPPETCODE
       apply_manifest(pp, catch_failures: true)
 
-      %w[5556 5557].each do |port|
+      ['5556', '5557'].each do |port|
         content = "socat -v tcp-l:#{port},reuseaddr,fork system:\"printf \\'HTTP/1.1 200 OK\r\n\r\nResponse on #{port}\\'\",nofork"
         create_remote_file(host, "/root/script-#{port}.sh", content)
         shell(%(/usr/bin/screen -dmS script-#{port} sh /root/script-#{port}.sh))
