@@ -76,7 +76,7 @@
 #   specific host from server_names as an argument.
 #   Default: false
 #
-# [*weight*]
+# [*weights*]
 #   Optional. Will add the weight option to the server line
 #   Default: undef
 #
@@ -144,7 +144,7 @@ define haproxy::balancermember (
   $defaults     = undef,
   Optional[Stdlib::Absolutepath] $config_file  = undef,
   $verifyhost   = false,
-  $weight       = undef,
+  $weights      = undef,
 ) {
 
   include ::haproxy::params

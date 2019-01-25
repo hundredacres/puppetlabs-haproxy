@@ -168,14 +168,14 @@ describe 'haproxy::balancermember' do
       )
     }
   end
-  context 'with weight' do
+  context 'with weights' do
     let(:params) do
       {
         name: 'tyler',
         listening_service: 'croy',
         ports: '18140',
         options: 'check',
-        weight: '100',
+        weights: '100',
       }
     end
 
