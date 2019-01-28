@@ -1,6 +1,6 @@
 {
   "name": "puppetlabs-haproxy",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "author": "puppetlabs",
   "summary": "Configures HAProxy servers and manages the configuration of backend member servers.",
   "license": "Apache-2.0",
@@ -22,7 +22,6 @@
       "operatingsystem": "RedHat",
       "operatingsystemrelease": [
         "5",
-        "6",
         "7"
       ]
     },
@@ -68,10 +67,10 @@
   "requirements": [
     {
       "name": "puppet",
-      "version_requirement": ">= 4.7.0 < 6.0.0"
+      "version_requirement": ">= 4.7.0 < 7.0.0"
     }
   ],
-  "template-url": "https://github.com/puppetlabs/pdk-templates",
-  "template-ref": "1.7.0-0-g57412ed",
-  "pdk-version": "1.7.0"
+  "template-url": "https://github.com/puppetlabs/pdk-templates/",
+  "template-ref": "heads/master-0-g6814a87",
+  "pdk-version": "1.7.1"
 }
