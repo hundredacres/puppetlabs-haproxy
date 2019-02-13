@@ -24,3 +24,4 @@
 <% elsif @type == 'server-template' -%>
   server-template <%= @prefix %> <%= @amount %> <%= @fqdn %><%= @port ? ":#{@port}" : "" %><%= if @define_cookies then " cookie " + @fqdn end %> <%= Array(@options).sort.join(" ") %><% if @verifyhost == true %> verifyhost <%= @fqdn %><% end %><% if @weight %> weight <%= @weight %><% end %>
 <% end -%>
+<% end -%>
