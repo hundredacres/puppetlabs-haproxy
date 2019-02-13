@@ -10,16 +10,17 @@
 <% end -%>
 <% else -%>
 <% if @type == 'server' -%>
-<% Array(@ipaddresses).zip(Array(@server_names)).each do |ipaddress,host| -%>
+<% if @weights -%>
+<% Array(@ipaddresses).zip(Array(@server_names), Array(@weights)).each do |ipaddress,host,weight| -%>
 <% if @ports -%>
 <%- Array(@ports).each do |port| -%>
-  server <%= host %> <%= ipaddress %>:<%= port %><%= if @define_cookies then " cookie " + host end %> <%= Array(@options).sort.join(" ") %><% if @verifyhost == true %> verifyhost <%= host %><% end %><% if @weight %> weight <%= @weight %><% end %>
+  server <%= host %> <%= ipaddress %>:<%= port %><%= if @define_cookies then " cookie " + host end %> <%= Array(@options).sort.join(" ") %><% if @verifyhost == true %> verifyhost <%= host %><% end %> weight <%= weight %>
 <%- end -%>
 <% else -%>
-  server <%= host %> <%= ipaddress %><%= if @define_cookies then " cookie " + host end %> <%= Array(@options).sort.join(" ") %><% if @verifyhost == true %> verifyhost <%= host %><% end %><% if @weight %> weight <%= @weight %>    <% end %>
+  server <%= host %> <%= ipaddress %><%= if @define_cookies then " cookie " + host end %> <%= Array(@options).sort.join(" ") %><% if @verifyhost == true %> verifyhost <%= host %><% end %> weight <%= weight %>
 <%- end -%>
 <% end -%>
+<% else -%>
 <% elsif @type == 'server-template' -%>
   server-template <%= @prefix %> <%= @amount %> <%= @fqdn %><%= @port ? ":#{@port}" : "" %><%= if @define_cookies then " cookie " + @fqdn end %> <%= Array(@options).sort.join(" ") %><% if @verifyhost == true %> verifyhost <%= @fqdn %><% end %><% if @weight %> weight <%= @weight %><% end %>
-<% end -%>
 <% end -%>
