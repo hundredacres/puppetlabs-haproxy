@@ -989,6 +989,8 @@ This type will setup a additional defaults configuration block inside the haprox
 
 * `instance`: When using `haproxy::instance` to run multiple instances of Haproxy on the same machine, this indicates which instance.  Defaults to "haproxy".
 
+For information on the classes and types, see the [REFERENCE.md](https://github.com/puppetlabs/puppetlabs-haproxy/blob/master/REFERENCE.md)
+
 ## Limitations
 
 For an extensive list of supported operating systems, see [metadata.json](https://github.com/puppetlabs/puppetlabs-haproxy/blob/master/metadata.json)
